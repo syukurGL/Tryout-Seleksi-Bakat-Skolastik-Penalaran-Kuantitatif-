@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tryout SBS - Penalaran Kuantitatif</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f0f4f8;
+            color: #1a202c;
+        }
+        .glass-morphism {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        }
+        .question-btn {
+            transition: all 0.2s;
+        }
+        .question-btn.active {
+            background-color: #4f46e5;
+            color: white;
+            transform: scale(1.1);
+        }
+        .question-btn.answered {
+            background-color: #10b981;
+            color: white;
+        }
+        .option-container:hover {
+            border-color: #4f46e5;
+            background-color: #f5f3ff;
+        }
+        .option-container.selected {
+            border-color: #4f46e5;
+            background-color: #eef2ff;
+            box-shadow: 0 0 0 2px #4f46e5;
+        }
+        .fade-in {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .hidden { display: none; }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        /* Logo Styling */
+        .logo-img {
+            height: 50px;
+            width: auto;
+            object-fit: contain;
+        }
+        @media (max-width: 640px) {
+            .logo-img {
+                height: 40px;
+            }
+        }
+
+        /* Modern Input Styling */
+        .input-focus-effect:focus {
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.15);
+            border-color: #4f46e5;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Header Section -->
+    <header class="gradient-bg text-white py-4 px-6 shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <!-- Logo & Title Group -->
+            <div class="flex items-center gap-4 text-center md:text-left">
+                <!-- Logo Community -->
+                <div class="bg-white/10 p-1.5 rounded-lg backdrop-blur-sm flex items-center justify-center min-w-[50px] min-h-[50px]">
+                    <img 
+                        src="https://lh3.googleusercontent.com/d/1mqMWSzn46YndXKxAhA3xza7lM5F4N0UL" 
+                        alt="Logo Komunitas" 
+                        class="logo-img"
+                        onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+                    >
+                    <span style="display:none" class="font-bold text-[10px] text-white uppercase tracking-tighter text-center leading-tight px-1">NIAS<br>LPDP</span>
+                </div>
+                <!-- Brand Text -->
+                <div>
+                    <h2 class="text-[10px] md:text-xs font-bold uppercase tracking-widest opacity-80 leading-tight">Yaahowu Gen</h2>
+                    <h1 class="text-lg md:text-xl lg:text-2xl font-extrabold leading-tight">Tryout Seleksi Bakat Skolastik (Penalaran Kuantitatif)</h1>
+                </div>
+            </div>
+
+            <!-- Participant & Timer Info -->
+            <div class="flex items-center gap-4">
+                <div id="participant-tag" class="hidden bg-black/20 backdrop-blur px-4 py-2 rounded-lg text-sm font-medium border border-white/10">
+                    <span class="opacity-70">Peserta:</span> <span id="display-name" class="font-bold"></span>
+                </div>
+                <div id="timer-display" class="bg-white/20 backdrop-blur px-6 py-2 rounded-full font-mono text-xl font-bold flex items-center gap-2 border border-white/10">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span id="countdown">40:00</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Progress Bar -->
+    <div class="w-full h-1.5 bg-gray-200">
+        <div id="progress-bar" class="h-full gradient-bg transition-all duration-500" style="width: 0%"></div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="flex-grow max-w-7xl mx-auto w-full p-4 md:p-6 flex flex-col lg:flex-row gap-6">
+        
+        <!-- Welcome Screen & Name Input -->
+        <div id="start-screen" class="w-full flex items-center justify-center py-12">
+            <div class="glass-morphism rounded-2xl p-8 max-w-2xl w-full text-center fade-in">
+                <div class="mb-6 inline-flex p-4 rounded-full bg-indigo-100 text-indigo-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                </div>
+                <h2 class="text-3xl font-bold text-gray-800 mb-2">Selamat Datang!</h2>
+                <p class="text-gray-500 mb-8 italic">Silakan lengkapi data diri sebelum memulai simulasi.</p>
+                
+                <div class="space-y-6 text-left mb-8">
+                    <!-- Name Input Field -->
+                    <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                        <label for="participant-name" class="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wide">Masukkan Nama Lengkap Anda</label>
+                        <input 
+                            type="text" 
+                            id="participant-name" 
+                            placeholder="Contoh: Budi Santoso" 
+                            class="w-full px-4 py-3 rounded-lg border border-gray-300 outline-none transition-all input-focus-effect text-lg"
+                            required
+                        >
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="bg-gray-50 p-4 rounded-xl border border-gray-100 flex flex-col items-center">
+                            <span class="text-indigo-600 font-bold">25</span>
+                            <span class="text-[10px] uppercase text-gray-400 font-bold">Jumlah Soal</span>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-xl border border-gray-100 flex flex-col items-center">
+                            <span class="text-indigo-600 font-bold">40 Menit</span>
+                            <span class="text-[10px] uppercase text-gray-400 font-bold">Waktu</span>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-xl border border-gray-100 flex flex-col items-center">
+                            <span class="text-indigo-600 font-bold">CAT LPDP</span>
+                            <span class="text-[10px] uppercase text-gray-400 font-bold">Standar</span>
+                        </div>
+                    </div>
+                </div>
+
+                <button onclick="validateAndStart()" class="gradient-bg text-white px-10 py-4 rounded-xl font-bold text-lg hover:opacity-90 transition-all shadow-lg shadow-indigo-200 w-full transform active:scale-95">
+                    Mulai Sekarang
+                </button>
+            </div>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div id="quiz-container" class="hidden w-full flex flex-col lg:flex-row gap-6">
+            <!-- Question Side -->
+            <div class="flex-grow space-y-6">
+                <div class="glass-morphism rounded-2xl p-6 md:p-8">
+                    <div class="flex justify-between items-center mb-6">
+                        <span class="text-sm font-semibold text-indigo-600 uppercase tracking-widest bg-indigo-50 px-3 py-1 rounded">Soal No. <span id="current-number">1</span></span>
+                        <span id="question-category" class="text-xs text-gray-400 font-medium tracking-wide bg-gray-50 px-2 py-1 rounded">Penalaran Analitik</span>
+                    </div>
+                    <div id="question-text" class="text-lg md:text-xl font-medium text-gray-800 leading-relaxed mb-8">
+                        Loading question...
+                    </div>
+                    <div id="options-container" class="space-y-3">
+                        <!-- Options injected here -->
+                    </div>
+                </div>
+
+                <!-- Navigation Controls -->
+                <div class="flex justify-between items-center bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+                    <button id="prev-btn" onclick="prevQuestion()" class="flex items-center gap-2 px-6 py-2.5 rounded-lg font-semibold text-gray-500 hover:bg-gray-100 transition-colors disabled:opacity-30">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                        </svg>
+                        Sebelumnya
+                    </button>
+                    <button id="next-btn" onclick="nextQuestion()" class="flex items-center gap-2 px-6 py-2.5 rounded-lg font-semibold bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors">
+                        Berikutnya
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Sidebar Palette -->
+            <div class="w-full lg:w-80 space-y-6">
+                <div class="glass-morphism rounded-2xl p-6">
+                    <h3 class="font-bold text-gray-700 mb-4 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                        </svg>
+                        Daftar Soal
+                    </h3>
+                    <div id="question-palette" class="grid grid-cols-5 gap-2">
+                        <!-- Palette buttons injected here -->
+                    </div>
+                    <div class="mt-8 space-y-6 border-t pt-6">
+                        <div class="flex justify-between items-center text-xs">
+                            <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-indigo-600"></span> Aktif</div>
+                            <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-emerald-500"></span> Terisi</div>
+                            <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-white border border-gray-300"></span> Kosong</div>
+                        </div>
+                        <button onclick="confirmSubmit()" class="w-full bg-red-500 text-white py-3 rounded-xl font-bold hover:bg-red-600 transition-colors shadow-lg shadow-red-100">
+                            Selesai & Kumpulkan
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Result Screen -->
+        <div id="result-screen" class="hidden w-full py-12">
+            <div class="glass-morphism rounded-3xl p-8 max-w-4xl mx-auto overflow-hidden fade-in">
+                <div class="text-center mb-10">
+                    <div id="result-emoji" class="text-6xl mb-4">🎉</div>
+                    <h2 class="text-3xl font-extrabold text-gray-800">Ringkasan Hasil</h2>
+                    <p class="text-gray-500 mt-2">Nama Peserta: <span id="final-name" class="font-bold text-indigo-600"></span></p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+                    <div class="bg-indigo-50 p-6 rounded-2xl text-center border border-indigo-100">
+                        <p class="text-xs font-bold text-indigo-400 uppercase tracking-widest mb-1">Skor Total</p>
+                        <p id="total-score" class="text-4xl font-black text-indigo-700">0</p>
+                        <p class="text-xs text-indigo-400 mt-1">Dari 125 Poin</p>
+                    </div>
+                    <div class="bg-emerald-50 p-6 rounded-2xl text-center border border-emerald-100">
+                        <p class="text-xs font-bold text-emerald-400 uppercase tracking-widest mb-1">Benar</p>
+                        <p id="correct-count" class="text-4xl font-black text-emerald-700">0</p>
+                        <p class="text-xs text-emerald-400 mt-1">Soal</p>
+                    </div>
+                    <div class="bg-red-50 p-6 rounded-2xl text-center border border-red-100">
+                        <p class="text-xs font-bold text-red-400 uppercase tracking-widest mb-1">Salah</p>
+                        <p id="wrong-count" class="text-4xl font-black text-red-700">0</p>
+                        <p class="text-xs text-red-400 mt-1">Soal</p>
+                    </div>
+                </div>
+
+                <!-- NEW: Button Review Jawaban -->
+                <div class="flex justify-center mb-10">
+                    <button onclick="showReview()" class="flex items-center gap-2 px-8 py-3 border-2 border-indigo-600 text-indigo-600 rounded-xl font-bold hover:bg-indigo-600 hover:text-white transition-all shadow-md">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                            <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" />
+                        </svg>
+                        Lihat Review Jawaban
+                    </button>
+                </div>
+
+                <div class="bg-gray-50 rounded-2xl p-8 mb-8 text-center border border-gray-100 relative overflow-hidden">
+                    <div class="relative z-10">
+                        <h4 class="text-indigo-600 font-bold mb-2">Evaluasi LPDP:</h4>
+                        <p id="motivation-text" class="text-lg md:text-xl text-gray-700 font-medium italic">
+                            Semangat terus belajarnya!
+                        </p>
+                    </div>
+                </div>
+
+                <!-- NEW: Area Container Review -->
+                <div id="review-container" class="hidden space-y-4 mb-10 border-t pt-10">
+                    <!-- Soal-soal review akan diinjeksi di sini -->
+                </div>
+
+                <button onclick="location.reload()" class="w-full py-4 bg-gray-800 text-white rounded-xl font-bold hover:bg-gray-900 transition-all shadow-lg">
+                    Coba Lagi (Ulangi Test)
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal Konfirmasi -->
+    <div id="submit-modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl p-8 max-w-sm w-full text-center">
+            <h3 class="text-xl font-bold text-gray-800 mb-2">Kumpulkan Jawaban?</h3>
+            <p class="text-gray-500 mb-6">Pastikan semua soal telah dijawab. Anda tidak dapat kembali setelah mengumpulkan.</p>
+            <div class="flex flex-col gap-3">
+                <button onclick="finishQuiz()" class="w-full gradient-bg text-white py-3 rounded-xl font-bold">Ya, Kumpulkan</button>
+                <button onclick="closeModal()" class="w-full bg-gray-100 text-gray-600 py-3 rounded-xl font-bold">Lanjutkan Mengerjakan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripting -->
+    <script>
+        // Data Soal dari Dokumen (Diperbarui secara keseluruhan)
+        const questions = [
+            { id: 1, text: "3, 9, 4, 24, 14, ..., 111, 1332", options: ["126", "87", "-87", "-54", "127"], correct: 0 },
+            { id: 2, text: "3, 6, 4, 8, 4, 8, 2, ...", options: ["-4", "-2", "-1", "4", "0"], correct: 3 },
+            { id: 3, text: "..., ..., ..., 422, 1.266, 1.280, 3.840", options: ["164, 178, 206", "122, 136, 408", "136, 408, 173", "124, 118, 194", "124, 118, 196"], correct: 1 },
+            { id: 4, text: "..., ..., ..., 18, 72, 360, 2160", options: ["2, 2, 4", "3, 3, 6", "3, 4, 6", "3, 6, 18", "3, 4, 18"], correct: 1 },
+            { id: 5, text: "1536, -768, 384, -192, 96, -48, 24, ..., ...", options: ["8, -4", "-8, 4", "-8, 2", "12, -6", "-12, 6"], correct: 4 },
+            { id: 6, text: "1/2, 2/8, 3/26, 4/80, ...", options: ["241/5", "242/5", "243/5", "244/5", "245/5"], correct: 1 },
+            { id: 7, text: "8, 9, 11, 14, 18, ..., ..., 36", options: ["23 dan 29", "20 dan 26", "20 dan 30", "20 dan 24", "17 dan 27"], correct: 0 },
+            { id: 8, text: "4, 6, 11, 12, 25, 24, 46, ...", options: ["44", "57", "51", "42", "63"], correct: 3 },
+            { id: 9, text: "Tentukan hasil dari: <br> (3.256)<sup>2</sup> - (3.254 × 3.256)", options: ["6.552", "6.512", "6.612", "6.652", "6.712"], correct: 1 },
+            { id: 10, text: "Tentukan hasil dari: <br> 65432 × 65432 - 65431 × 65433", options: ["-1", "-2", "1", "3", "5"], correct: 2 },
+            { id: 11, text: "Tentukan hasil dari: <br> (234 - 13)<sup>2</sup> - (161 + 59)<sup>2</sup>", options: ["441", "534", "521", "741", "821"], correct: 0 },
+            { id: 12, text: "Diketahui nilai x=10 dan y=8. <br> Didefinisikan: <br> A = 25x - y <br> B = x + 34y <br> Manakah hubungan yang benar antara kuantitas A dan B berdasarkan informasi yang diberikan?", options: ["4A > 2B", "2B < -4A", "Hubungan A dan B tidak dapat ditentukan", "(1/3)A > (1/4)B", "(1/2)A < (1/5)B"], correct: 4 },
+            { id: 13, text: "Diketahui: <br> A = Jarak yang ditempuh Rina selama 90 menit dengan kecepatan 70 km/jam. <br> B = Jarak yang ditempuh Rani dengan kecepatan 140 km/jam selama waktu yang sama dengan Rina. <br> Tentukan hubungan antara A dan B yang benar.", options: ["A > B", "3A > 2B", "B = 2A", "A = 2B", "4A < B"], correct: 2 },
+            { id: 14, text: "Lantai seluas 60 m² selesai dikeramik selama 5 jam oleh 8 pekerja. Waktu yang diperlukan untuk memasang keramik seluas 50 m² oleh 6 pekerja adalah ....", options: ["4 jam 2 menit", "3 jam 10 menit", "5 jam 6 menit", "2 jam 30 menit", "4 jam 40 menit"], correct: 2 },
+            { id: 15, text: "Seorang mahasiswa memperoleh nilai 78, 64, 72, 68, dan 70 untuk lima mata kuliah yang diambilnya. Berapakah nilai pada mata kuliah keenam agar ia memiliki rata-rata 72?", options: ["80", "78", "76", "74", "82"], correct: 0 },
+            { id: 16, text: "Seseorang menjual sebuah HP seharga Rp156.000 dan memperoleh laba 30% dari harga beli. Maka harga beli HP tersebut adalah ....", options: ["Rp120.000", "Rp125.000", "Rp130.000", "Rp135.000", "Rp140.000"], correct: 0 },
+            { id: 17, text: "Suatu panti asuhan memiliki 30 anak yang menghabiskan 1 karung beras dalam waktu 15 hari. Jika jumlah anak ditambah 15 orang, berapa hari yang dibutuhkan untuk menghabiskan 1 karung beras yang sama?", options: ["8", "9", "10", "11", "12"], correct: 2 },
+            { id: 18, text: "Jika 12 gajah mampu menghabiskan makanan dalam waktu 50 hari, kemudian dipindahkan dan tersisa 8 ekor gajah, maka berapa hari stok makanan bertahan?", options: ["40", "50", "60", "75", "80"], correct: 3 },
+            { id: 19, text: "Seorang ayah meninggalkan harta warisan sebesar X rupiah untuk dibagikan kepada istri dan 3 orang anaknya. Berapakah total harta warisan X yang ditinggalkan? <br> (1) Istri mendapatkan 1/8 bagian, dan masing-masing anak mendapatkan bagian yang sama besar. <br> (2) Salah satu anak mendapatkan bagian sebesar Rp210.000.000.", options: ["Pernyataan (1) SAJA cukup, tetapi pernyataan (2) SAJA tidak cukup", "Pernyataan (2) SAJA cukup, tetapi pernyataan (1) SAJA tidak cukup", "DUA pernyataan BERSAMA-SAMA cukup, tetapi SATU pernyataan SAJA tidak cukup", "Pernyataan (1) SAJA cukup menjawab pertanyaan, dan pernyataan (2) SAJA cukup", "Pernyataan (1) dan (2) tidak cukup untuk menjawab pertanyaan"], correct: 2 },
+            { id: 20, text: "Pada seleksi SBS LPDP tahun ini, terdapat total 60 soal dengan bobot nilai sama untuk setiap jawaban benar (skor maksimal 300). Peserta dinyatakan lulus jika mencapai passing grade minimal 110. Apakah Si X dinyatakan lulus seleksi SBS LPDP? <br> (1) Si X menjawab salah sebanyak 35 soal. <br> (2) Si X mengosongkan (tidak mengisi) 5 soal.", options: ["Pernyataan (1) SAJA cukup, tetapi pernyataan (2) SAJA tidak cukup", "Pernyataan (2) SAJA cukup, tetapi pernyataan (1) SAJA tidak cukup", "DUA pernyataan BERSAMA-SAMA cukup, tetapi SATU pernyataan SAJA tidak cukup", "Pernyataan (1) SAJA cukup menjawab pertanyaan, dan pernyataan (2) SAJA cukup", "Pernyataan (1) dan (2) tidak cukup untuk menjawab pertanyaan"], correct: 2 },
+            { id: 21, text: "Jika a dan b bilangan real, tentukan nilai dari: (5a+2b)/a = ...? <br> (1) (4a-b)/a = 1 <br> (2) a<sup>2</sup> + b<sup>2</sup> = 25", options: ["Pernyataan (1) SAJA cukup, tetapi pernyataan (2) SAJA tidak cukup", "Pernyataan (2) SAJA cukup, tetapi pernyataan (1) SAJA tidak cukup", "DUA pernyataan BERSAMA-SAMA cukup, tetapi SATU pernyataan SAJA tidak cukup", "Pernyataan (1) SAJA cukup menjawab pertanyaan, dan pernyataan (2) SAJA cukup", "Pernyataan (1) dan (2) tidak cukup untuk menjawab pertanyaan"], correct: 0 },
+            { id: 22, text: "Diketahui x, y dan z adalah bilangan real yang memenuhi: x + 2y + 4z = 10. Berapakah nilai x? <br> (1) z = 2 <br> (2) y + 2z = 3", options: ["Pernyataan (1) SAJA cukup, tetapi pernyataan (2) SAJA tidak cukup", "Pernyataan (2) SAJA cukup, tetapi pernyataan (1) SAJA tidak cukup", "DUA pernyataan BERSAMA-SAMA cukup, tetapi SATU pernyataan SAJA tidak cukup", "Pernyataan (1) SAJA cukup menjawab pertanyaan, dan pernyataan (2) SAJA cukup", "Pernyataan (1) dan (2) tidak cukup untuk menjawab pertanyaan"], correct: 1 },
+            { id: 23, text: "Berapakah luas sebuah segitiga siku-siku yang memiliki panjang alas 8 cm? <br> (1) Panjang sisi miring segitiga tersebut adalah 10 cm. <br> (2) Panjang sisi tegaknya adalah 2 lebih dari setengah panjang alasnya.", options: ["Pernyataan (1) SAJA cukup, tetapi pernyataan (2) SAJA tidak cukup", "Pernyataan (2) SAJA cukup, tetapi pernyataan (1) SAJA tidak cukup", "DUA pernyataan BERSAMA-SAMA cukup, tetapi SATU pernyataan SAJA tidak cukup", "Pernyataan (1) SAJA cukup menjawab pertanyaan, dan pernyataan (2) SAJA cukup", "Pernyataan (1) dan (2) tidak cukup untuk menjawab pertanyaan"], correct: 3 },
+            { id: 24, text: "Sebuah kotak berisi 21 bola yang terdiri atas bola merah, bola kuning, dan bola hijau. Berapakah peluang terambilnya satu bola hijau pada pengambilan pertama? <br> (1) Kotak tersebut berisi 10 bola merah dan 4 bola kuning. <br> (2) Perbandingan banyaknya bola merah dan bola kuning adalah 3 : 2", options: ["Pernyataan (1) SAJA cukup, tetapi pernyataan (2) SAJA tidak cukup", "Pernyataan (2) SAJA cukup, tetapi pernyataan (1) SAJA tidak cukup", "DUA pernyataan BERSAMA-SAMA cukup, tetapi SATU pernyataan SAJA tidak cukup", "Pernyataan (1) SAJA cukup menjawab pertanyaan, dan pernyataan (2) SAJA cukup", "Pernyataan (1) dan (2) tidak cukup untuk menjawab pertanyaan"], correct: 0 },
+            { id: 25, text: "Seorang pedagang membeli sebuah barang dan kemudian menjualnya kembali. Apakah pedagang tersebut mendapatkan keuntungan minimal sebesar 5% dari harga beli? <br> (1) Pedagang memberikan diskon sebesar 20% dari harga label kepada pembeli. <br> (2) Harga label barang tersebut diatur 30% lebih tinggi dari harga belinya.", options: ["Pernyataan (1) SAJA cukup, tetapi pernyataan (2) SAJA tidak cukup", "Pernyataan (2) SAJA cukup, tetapi pernyataan (1) SAJA tidak cukup", "DUA pernyataan BERSAMA-SAMA cukup, tetapi SATU pernyataan SAJA tidak cukup", "Pernyataan (1) SAJA cukup menjawab pertanyaan, dan pernyataan (2) SAJA cukup", "Pernyataan (1) dan (2) tidak cukup untuk menjawab pertanyaan"], correct: 2 }
+        ];
+
+        // State Management
+        let currentIdx = 0;
+        let answers = Array(questions.length).fill(null);
+        let timeLeft = 40 * 60; // 40 menit
+        let timerInterval;
+        let userName = "";
+
+        // Navigation & Logic
+        function validateAndStart() {
+            const nameInput = document.getElementById('participant-name');
+            userName = nameInput.value.trim();
+            
+            if (!userName) {
+                alert("Silakan isi nama Anda terlebih dahulu sebelum memulai tryout!");
+                nameInput.focus();
+                return;
+            }
+            
+            startQuiz();
+        }
+
+        function startQuiz() {
+            // Setup Header Info
+            document.getElementById('display-name').innerText = userName;
+            document.getElementById('participant-tag').classList.remove('hidden');
+
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('quiz-container').classList.remove('hidden');
+            initPalette();
+            renderQuestion();
+            startTimer();
+        }
+
+        function initPalette() {
+            const palette = document.getElementById('question-palette');
+            palette.innerHTML = '';
+            questions.forEach((q, index) => {
+                const btn = document.createElement('button');
+                btn.className = `question-btn w-full h-10 rounded-lg border text-sm font-bold flex items-center justify-center transition-all ${index === 0 ? 'active' : ''}`;
+                btn.id = `palette-${index}`;
+                btn.innerText = index + 1;
+                btn.onclick = () => jumpToQuestion(index);
+                palette.appendChild(btn);
+            });
+        }
+
+        function renderQuestion() {
+            const q = questions[currentIdx];
+            document.getElementById('current-number').innerText = currentIdx + 1;
+            document.getElementById('question-text').innerHTML = q.text;
+            
+            let catText = "Penalaran Analitik";
+            if(currentIdx < 8) catText = "Deret Angka";
+            else if(currentIdx < 18) catText = "Aljabar & Hitung Cepat";
+            else catText = "Kecukupan Data";
+            document.getElementById('question-category').innerText = catText;
+
+            const container = document.getElementById('options-container');
+            container.innerHTML = '';
+            
+            const labels = ['A', 'B', 'C', 'D', 'E'];
+            q.options.forEach((opt, i) => {
+                const div = document.createElement('div');
+                div.className = `option-container flex items-center p-4 border-2 rounded-xl cursor-pointer transition-all fade-in ${answers[currentIdx] === i ? 'selected' : 'border-gray-100'}`;
+                div.onclick = () => selectOption(i);
+                
+                div.innerHTML = `
+                    <span class="w-8 h-8 rounded-full border-2 border-indigo-200 flex items-center justify-center font-bold text-sm mr-4 ${answers[currentIdx] === i ? 'bg-indigo-600 text-white border-indigo-600' : 'text-gray-400'}">${labels[i]}</span>
+                    <span class="flex-grow text-gray-700 font-medium">${opt}</span>
+                `;
+                container.appendChild(div);
+            });
+
+            document.getElementById('prev-btn').disabled = currentIdx === 0;
+            document.getElementById('next-btn').innerHTML = currentIdx === questions.length - 1 ? 
+                'Selesai' : 
+                'Berikutnya';
+
+            document.querySelectorAll('.question-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`palette-${currentIdx}`).classList.add('active');
+            
+            updateProgress();
+        }
+
+        function selectOption(idx) {
+            answers[currentIdx] = idx;
+            document.getElementById(`palette-${currentIdx}`).classList.add('answered');
+            renderQuestion();
+        }
+
+        function jumpToQuestion(idx) {
+            currentIdx = idx;
+            renderQuestion();
+        }
+
+        function nextQuestion() {
+            if (currentIdx < questions.length - 1) {
+                currentIdx++;
+                renderQuestion();
+            } else {
+                confirmSubmit();
+            }
+        }
+
+        function prevQuestion() {
+            if (currentIdx > 0) {
+                currentIdx--;
+                renderQuestion();
+            }
+        }
+
+        function updateProgress() {
+            const answeredCount = answers.filter(a => a !== null).length;
+            const percentage = (answeredCount / questions.length) * 100;
+            document.getElementById('progress-bar').style.width = `${percentage}%`;
+        }
+
+        function startTimer() {
+            const display = document.getElementById('countdown');
+            const timerBox = document.getElementById('timer-display');
+            
+            timerInterval = setInterval(() => {
+                let minutes = Math.floor(timeLeft / 60);
+                let seconds = timeLeft % 60;
+                
+                display.innerText = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+
+                if (timeLeft === 300) {
+                    timerBox.classList.add('bg-red-500', 'text-white');
+                    timerBox.classList.remove('bg-white/20');
+                }
+
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    finishQuiz();
+                }
+                timeLeft--;
+            }, 1000);
+        }
+
+        function confirmSubmit() {
+            document.getElementById('submit-modal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('submit-modal').classList.add('hidden');
+        }
+
+        function finishQuiz() {
+            clearInterval(timerInterval);
+            document.getElementById('submit-modal').classList.add('hidden');
+            document.getElementById('quiz-container').classList.add('hidden');
+            document.getElementById('result-screen').classList.remove('hidden');
+            document.getElementById('final-name').innerText = userName;
+            document.getElementById('timer-display').classList.add('hidden');
+            document.getElementById('participant-tag').classList.add('hidden');
+
+            calculateResults();
+        }
+
+        function calculateResults() {
+            let score = 0;
+            let correct = 0;
+
+            questions.forEach((q, i) => {
+                if (answers[i] === q.correct) {
+                    correct++;
+                    score += 5;
+                }
+            });
+
+            document.getElementById('total-score').innerText = score;
+            document.getElementById('correct-count').innerText = correct;
+            document.getElementById('wrong-count').innerText = questions.length - correct;
+
+            let motivation = "";
+            let emoji = "🎉";
+            
+            if (score <= 25) {
+                motivation = "Perjalanan LPDP masih panjang. Perkuat dasar dan terus belajar.";
+                emoji = "🌱";
+            } else if (score <= 50) {
+                motivation = "Kamu sedang berproses menuju standar LPDP. Tingkatkan lagi latihanmu.";
+                emoji = "📖";
+            } else if (score <= 75) {
+                motivation = "Cukup baik. Kamu mulai mendekati level seleksi LPDP.";
+                emoji = "💪";
+            } else if (score <= 100) {
+                motivation = "Bagus! Kamu sudah kompetitif untuk seleksi LPDP.";
+                emoji = "🚀";
+            } else {
+                motivation = "Luar biasa! Levelmu sudah siap bersaing di LPDP.";
+                emoji = "🏆";
+            }
+
+            document.getElementById('motivation-text').innerText = motivation;
+            document.getElementById('result-emoji').innerText = emoji;
+        }
+
+        window.onbeforeunload = function() {
+            if (!document.getElementById('quiz-container').classList.contains('hidden')) {
+                return "Tryout sedang berlangsung. Yakin ingin keluar?";
+            }
+        };
+
+        // NEW: Fungsi showReview untuk menampilkan pembahasan singkat
+        function showReview() {
+            const container = document.getElementById('review-container');
+            container.classList.remove('hidden');
+            container.innerHTML = '<h3 class="text-2xl font-bold text-gray-800 mb-6 border-b pb-4">Review Jawaban</h3>';
+            
+            const labels = ['A', 'B', 'C', 'D', 'E'];
+            
+            questions.forEach((q, i) => {
+                const userAnswerIdx = answers[i];
+                const correctAnswerIdx = q.correct;
+                const isCorrect = userAnswerIdx === correctAnswerIdx;
+                
+                const card = document.createElement('div');
+                card.className = `p-6 rounded-2xl border-2 transition-all fade-in ${isCorrect ? 'border-emerald-100 bg-emerald-50/30' : 'border-red-100 bg-red-50/30'}`;
+                
+                card.innerHTML = `
+                    <div class="flex justify-between items-start mb-3">
+                        <span class="font-bold text-gray-700">Soal No. ${i + 1}</span>
+                        <span class="text-[10px] font-black px-2 py-1 rounded uppercase ${isCorrect ? 'bg-emerald-500 text-white' : 'bg-red-500 text-white'}">
+                            ${isCorrect ? 'Benar' : 'Salah'}
+                        </span>
+                    </div>
+                    <div class="text-gray-800 mb-4 font-medium leading-relaxed">${q.text}</div>
+                    <div class="space-y-2 border-t pt-4">
+                        <div class="text-sm">
+                            <span class="font-bold text-gray-600">Jawaban Anda:</span> 
+                            <span class="${isCorrect ? 'text-emerald-600' : 'text-red-600'} font-bold">
+                                ${userAnswerIdx !== null ? labels[userAnswerIdx] + '. ' + q.options[userAnswerIdx] : '<span class="italic text-gray-400 font-normal">Tidak Dijawab</span>'}
+                            </span>
+                        </div>
+                        <div class="text-sm">
+                            <span class="font-bold text-indigo-600 uppercase tracking-tighter">Kunci Jawaban:</span> 
+                            <span class="text-indigo-700 font-bold underline decoration-indigo-200">
+                                ${labels[correctAnswerIdx]}. ${q.options[correctAnswerIdx]}
+                            </span>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+            
+            // Scroll otomatis ke bagian review
+            container.scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>
